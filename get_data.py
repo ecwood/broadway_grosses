@@ -6,8 +6,10 @@ import random
 TEMP_DIR = 'temp/'
 
 SHOW_START_TAG = '<td data-label="Show" class="col-0">'
-SHOW_END_TAG = '</tr>'
+END_TAG = '</tr>'
 LINK_MARKER = '<a href='
+
+SHOW_GROSS_TAG = '<td data-label="Week Ending" class="col-0">'
 
 # Keys
 LINK_KEY = 'link'
@@ -22,6 +24,7 @@ PERFORMANCES_KEY = 'num_performances'
 PREVIEWS_KEY = 'num_previews'
 CAPACITY_KEY = 'percent_capacity'
 DIFF_CAP_KEY = 'diff_capacity'
+WEEK_NUM_KEY = 'week_num'
 
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
@@ -62,7 +65,7 @@ def process_grosses(lines):
 		index += 1
 
 		# Showname
-		showname = process_span_line(lines[index])
+		showname = process_span_line(lines[index]).replace('&amp; ', "&").replace('&#039;', "'")
 		index += 2
 
 		# Theater
@@ -106,12 +109,89 @@ def process_grosses(lines):
 		show_grosses[showname] = show
 	return show_grosses
 
+def process_show_gross_page(link):
+	lines = get_webpage(link)
+
+	index = 0
+	show_gross_page = dict()
+	while index < len(lines):
+		grosses = dict()
+		week_end_date = ""
+		while lines[index] != SHOW_GROSS_TAG:
+			index += 1
+			if index >= len(lines):
+				return show_gross_page
+		index += 1
+
+		# End Date
+		week_end_date = process_span_line(lines[index])
+		index += 3
+
+		# Week Number
+		grosses[WEEK_NUM_KEY] = process_span_line(lines[index])
+		index += 3
+
+		# Weekly Gross
+		grosses[GROSS_KEY] = process_span_line(lines[index])
+		index += 4
+
+		# Weekly Gross Difference
+		grosses[DIFF_KEY] = process_span_line(lines[index])
+		index += 3
+
+		# Average Ticket Cost
+		grosses[AVG_TICKET_KEY] = process_span_line(lines[index])
+		index += 1
+		grosses[TOP_TICKET_KEY] = process_span_line(lines[index])
+		index += 3
+
+		# Seats Sold
+		grosses[SEATS_SOLD_KEY] = process_span_line(lines[index])
+		index += 1
+		grosses[SEATS_IN_THEATER_KEY] = process_span_line(lines[index])
+		index += 3
+
+		# Performances and Previews
+		grosses[PERFORMANCES_KEY] = process_span_line(lines[index])
+		index += 1
+		grosses[PREVIEWS_KEY] = process_span_line(lines[index])
+		index += 3
+
+		# Capacity Percentage
+		grosses[CAPACITY_KEY] = process_span_line(lines[index])
+		index += 3
+
+		# Difference in Capacity Percentage
+		grosses[DIFF_CAP_KEY] = process_span_line(lines[index])
+		index += 1
+
+		show_gross_page[week_end_date] = grosses
+
+
+def process_show_grosses(base_link):
+	# Shows go from a link like: https://www.playbill.com/production/gross?production=00000150-aea6-d936-a7fd-eef6ecdd0001
+	# to a link like: https://www.playbill.com/production/gross/p1?production=00000150-aea6-d936-a7fd-eef6ecdd0001
+
+	# At a show's max length, increating the page (pX) will just keep it on the last one
+	show_gross_pages = dict()
+
+	page = 1
+
+	page_first_half = base_link.split('?')[0] + '/p'
+	page_second_half = '?' + base_link.split('?')[1]
+
+	while True:
+		show_gross_page = process_show_gross_page(page_first_half + str(page) + page_second_half)
+		for date in show_gross_page:
+			if date in show_gross_pages:
+				return show_gross_pages
+		show_gross_pages.update(show_gross_page)
+		page += 1
+
 def print_dict(jsondict):
 	print(json.dumps(jsondict, sort_keys = True, indent = 4))
 
 if __name__ == '__main__':
 	args = get_args()
 
-	file = get_webpage(args.inputLink)
-	print_dict(process_grosses(file))
-	print('test')
+	print_dict(process_show_grosses(args.inputLink))
