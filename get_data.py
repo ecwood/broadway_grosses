@@ -51,8 +51,10 @@ def process_grosses(lines):
 	while index < len(lines):
 		show = dict()
 		showname = ""
-		while index < len(lines) and lines[index] != SHOW_START_TAG:
+		while lines[index] != SHOW_START_TAG:
 			index += 1
+			if index >= len(lines):
+				return show_grosses
 		index += 1
 
 		# Link
@@ -102,7 +104,6 @@ def process_grosses(lines):
 		index += 1
 
 		show_grosses[showname] = show
-		print_dict(show_grosses)
 	return show_grosses
 
 def print_dict(jsondict):
