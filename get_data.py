@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 import random
+from matplotlib import pyplot as plt
 
 TEMP_DIR = 'temp/'
 
@@ -25,10 +26,11 @@ PREVIEWS_KEY = 'num_previews'
 CAPACITY_KEY = 'percent_capacity'
 DIFF_CAP_KEY = 'diff_capacity'
 WEEK_NUM_KEY = 'week_num'
+RECENTNESS_KEY = 'recent'
 
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
-	arg_parser.add_argument('inputLink', type=str)
+	# arg_parser.add_argument('inputLink', type=str)
 	return arg_parser.parse_args()
 
 def get_webpage(link):
@@ -109,7 +111,7 @@ def process_grosses(lines):
 		show_grosses[showname] = show
 	return show_grosses
 
-def process_show_gross_page(link):
+def process_show_gross_page(link, recent_val):
 	lines = get_webpage(link)
 
 	index = 0
@@ -120,7 +122,7 @@ def process_show_gross_page(link):
 		while lines[index] != SHOW_GROSS_TAG:
 			index += 1
 			if index >= len(lines):
-				return show_gross_page
+				return show_gross_page, recent_val
 		index += 1
 
 		# End Date
@@ -165,6 +167,9 @@ def process_show_gross_page(link):
 		grosses[DIFF_CAP_KEY] = process_span_line(lines[index])
 		index += 1
 
+		grosses[RECENTNESS_KEY] = recent_val
+		recent_val += 1
+
 		show_gross_page[week_end_date] = grosses
 
 
@@ -180,8 +185,10 @@ def process_show_grosses(base_link):
 	page_first_half = base_link.split('?')[0] + '/p'
 	page_second_half = '?' + base_link.split('?')[1]
 
+	recent_val = 1
+
 	while True:
-		show_gross_page = process_show_gross_page(page_first_half + str(page) + page_second_half)
+		show_gross_page, recent_val = process_show_gross_page(page_first_half + str(page) + page_second_half, recent_val)
 		for date in show_gross_page:
 			if date in show_gross_pages:
 				return show_gross_pages
@@ -191,7 +198,30 @@ def process_show_grosses(base_link):
 def print_dict(jsondict):
 	print(json.dumps(jsondict, sort_keys = True, indent = 4))
 
+def plot_grosses(weekly_grosses):
+	size = len(weekly_grosses)
+
+	# https://note.nkmk.me/en/python-list-initialize/
+	# x is the week
+	# y is the gross
+	weekly_grosses_x = [0] * size
+	weekly_grosses_y = [0] * size
+
+	for week in weekly_grosses:
+		index = size - (weekly_grosses[week][RECENTNESS_KEY])
+		weekly_grosses_x[index] = week
+		weekly_grosses_y[index] = weekly_grosses[week][GROSS_KEY]
+
+	# https://www.geeksforgeeks.org/python-introduction-matplotlib/
+	plt.plot(weekly_grosses_x, weekly_grosses_y)
+	plt.show()
+
+
 if __name__ == '__main__':
 	args = get_args()
 
-	print_dict(process_show_grosses(args.inputLink))
+	sweeney_todd = 'https://www.playbill.com/production/gross?production=651e8a52-1de9-42b8-b3f9-88a56c5c0baa'
+	wicked = 'https://www.playbill.com/production/gross?production=00000150-aea6-d936-a7fd-eef6ecdd0001'
+
+	wicked_grosses = process_show_grosses(wicked)
+	plot_grosses(wicked_grosses)
