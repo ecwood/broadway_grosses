@@ -114,3 +114,4 @@ if __name__ == '__main__':
 
 	file = get_webpage(args.inputLink)
 	print_dict(process_grosses(file))
+	print('test')
