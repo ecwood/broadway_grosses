@@ -205,23 +205,34 @@ def plot_grosses(weekly_grosses):
 	# x is the week
 	# y is the gross
 	weekly_grosses_x = [0] * size
-	weekly_grosses_y = [0] * size
+	weekly_grosses_y = [0] * size	
 
 	for week in weekly_grosses:
 		index = size - (weekly_grosses[week][RECENTNESS_KEY])
 		weekly_grosses_x[index] = week
-		weekly_grosses_y[index] = weekly_grosses[week][GROSS_KEY]
+		weekly_grosses_y[index] = float(weekly_grosses[week][GROSS_KEY][1:].replace(',', ''))
 
 	# https://www.geeksforgeeks.org/python-introduction-matplotlib/
 	plt.plot(weekly_grosses_x, weekly_grosses_y)
-	plt.show()
 
+	# https://stackoverflow.com/questions/1221108/barchart-with-vertical-labels-in-python-matplotlib
+	plt.xticks(rotation='vertical')
+
+	# https://stackoverflow.com/questions/20337664/cleanest-way-to-hide-every-nth-tick-label-in-matplotlib-colorbar
+	# with
+	# https://www.delftstack.com/howto/matplotlib/how-to-hide-axis-text-ticks-and-or-tick-labels-in-matplotlib/
+	ax = plt.gca()
+	for label in ax.xaxis.get_ticklabels()[::2]:
+		label.set_visible(False)
+
+	plt.show()
 
 if __name__ == '__main__':
 	args = get_args()
 
 	sweeney_todd = 'https://www.playbill.com/production/gross?production=651e8a52-1de9-42b8-b3f9-88a56c5c0baa'
 	wicked = 'https://www.playbill.com/production/gross?production=00000150-aea6-d936-a7fd-eef6ecdd0001'
+	hadestown = 'https://www.playbill.com/production/gross?production=00000167-5ad2-d052-a567-dfdb48060000'
 
-	wicked_grosses = process_show_grosses(wicked)
-	plot_grosses(wicked_grosses)
+	hadestown_grosses = process_show_grosses(hadestown)
+	plot_grosses(hadestown_grosses)
