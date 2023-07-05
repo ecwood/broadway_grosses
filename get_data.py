@@ -28,6 +28,49 @@ DIFF_CAP_KEY = 'diff_capacity'
 WEEK_NUM_KEY = 'week_num'
 RECENTNESS_KEY = 'recent'
 
+THEATERS = {"Al Hirschfeld Theatre": 'https://www.playbill.com/venue/al-hirschfeld-theatre-vault-0000000268',
+			"Ambassador Theatre": 'https://www.playbill.com/venue/ambassador-theatre-vault-0000000033',
+			"American Airlines Theatre": 'https://www.playbill.com/venue/american-airlines-theatre-vault-0000000327',
+			"August Wilson Theatre": 'https://www.playbill.com/venue/august-wilson-theatre-vault-0000000162',
+			"Belasco Theatre": 'https://www.playbill.com/venue/belasco-theatre-vault-0000000334',
+			"Bernard B. Jacobs Theatre": 'https://www.playbill.com/venue/bernard-b-jacobs-theatre-vault-0000000323',
+			"Booth Theatre": 'https://www.playbill.com/venue/booth-theatre-vault-0000000054',
+			"Broadhurst Theatre": 'https://www.playbill.com/venue/broadhurst-theatre-vault-0000000061',
+			"Broadway Theatre": 'https://www.playbill.com/venue/broadway-theatre-vault-0000000390',
+			"Circle in the Square Theatre": 'https://www.playbill.com/venue/circle-in-the-square-theatre-vault-0000000092',
+			"Ethel Barrymore Theatre": 'https://www.playbill.com/venue/ethel-barrymore-theatre-vault-0000000135',
+			"Eugene O'Neill Theatre": 'https://www.playbill.com/venue/eugene-oneill-theatre-vault-0000000141',
+			"Gerald Shoenfeld Theatre": 'https://www.playbill.com/venue/gerald-schoenfeld-theatre-vault-0000000293',
+			"Gershwin Theatre": 'https://www.playbill.com/venue/george-gershwin-theatre-vault-0000000339',
+			"Hayes Theaer": 'https://www.playbill.com/venue/helen-hayes-theater-vault-0000000235',
+			"Hudson Theatre": 'https://www.playbill.com/venue/hudson-theatre-vault-0000000198',
+			"Imperial Theatre": 'https://www.playbill.com/venue/imperial-theatre-vault-0000000201',
+			"James Earl Jones Theatre": 'https://www.playbill.com/venue/james-earl-jones-theatre-2022-new-york-ny',
+			"John Golden Theatre": 'https://www.playbill.com/venue/john-golden-theatre-vault-0000000270',
+			"Lena Horne Theatre": 'https://www.playbill.com/venue/lena-horne-theatre-2022-new-york-ny',
+			"Longacre Theatre": 'https://www.playbill.com/venue/longacre-theatre-vault-0000000242',
+			"Lunt-Fontanne Theatre": 'https://www.playbill.com/venue/lunt-fontanne-theatre-vault-0000000158',
+			"Lyceum Theatre": 'https://www.playbill.com/venue/lyceum-theatre-vault-0000000243',
+			"Lyric Theatre": 'https://www.playbill.com/venue/lyric-theatre-vault-0000000590',
+			"Majestic Theatre": 'https://www.playbill.com/venue/majestic-theatre-vault-0000000261',
+			"Marquis Theatre": 'https://www.playbill.com/venue/marquis-theatre-vault-0000000267',
+			"Minskoff Theatre": 'https://www.playbill.com/venue/minskoff-theatre-vault-0000000068',
+			"Music Box Theatre": 'https://www.playbill.com/venue/music-box-theatre-vault-0000000070',
+			"Nederlander Theater": 'https://www.playbill.com/venue/nederlander-theatre-vault-0000000071',
+			"Neil Simon Theatre": 'https://www.playbill.com/venue/neil-simon-theatre-vault-0000000031',
+			"New Amsterdam Theatre": 'https://www.playbill.com/venue/new-amsterdam-theatre-vault-0000000276',
+			"Palace Theatre": 'https://www.playbill.com/venue/palace-theatre-vault-0000000288',
+			"Richard Rodgers Theatre": 'https://www.playbill.com/venue/richard-rodgers-theatre-vault-0000000085',
+			"Samuel J. Friedman Theatre": 'https://www.playbill.com/venue/samuel-j-friedman-theatre-vault-0000000052',
+			"Shubert Theatre": 'https://www.playbill.com/venue/shubert-theatre-vault-0000000329',
+			"Stephen Sondheim Theatre": 'https://www.playbill.com/venue/stephen-sondheim-theatre-vault-0000000184',
+			"St. James Theatre": 'https://www.playbill.com/venue/st-james-theatre-vault-0000000133',
+			"Studio 54": 'https://www.playbill.com/venue/studio-54-vault-0000000147',
+			"Vivian Beaumont Theater": 'https://www.playbill.com/venue/vivian-beaumont-theater-vault-0000000344',
+			"Walter Kerr Theatre": 'https://www.playbill.com/venue/walter-kerr-theatre-vault-0000000320',
+			"Winter Garden Theatre": 'https://www.playbill.com/venue/winter-garden-theatre-vault-0000000353'}
+
+
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
 	# arg_parser.add_argument('inputLink', type=str)
@@ -233,6 +276,7 @@ if __name__ == '__main__':
 	sweeney_todd = 'https://www.playbill.com/production/gross?production=651e8a52-1de9-42b8-b3f9-88a56c5c0baa'
 	wicked = 'https://www.playbill.com/production/gross?production=00000150-aea6-d936-a7fd-eef6ecdd0001'
 	hadestown = 'https://www.playbill.com/production/gross?production=00000167-5ad2-d052-a567-dfdb48060000'
+	phantom = 'https://www.playbill.com/production/gross?production=00000150-aea4-d936-a7fd-eef4dee60001'
 
-	hadestown_grosses = process_show_grosses(hadestown)
+	hadestown_grosses = process_show_grosses(phantom)
 	plot_grosses(hadestown_grosses)
