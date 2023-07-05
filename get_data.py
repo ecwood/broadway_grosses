@@ -70,6 +70,11 @@ THEATERS = {"Al Hirschfeld Theatre": 'https://www.playbill.com/venue/al-hirschfe
 			"Walter Kerr Theatre": 'https://www.playbill.com/venue/walter-kerr-theatre-vault-0000000320',
 			"Winter Garden Theatre": 'https://www.playbill.com/venue/winter-garden-theatre-vault-0000000353'}
 
+# Theater Previous Shows Keys
+PREVIOUS_SHOWS_TAG = '<h3 itemprop="headline" class="bsp-component-title">Previous Shows in This Building</h3>'
+PREVIOUS_SHOW_TAG = '<div class="bsp-carousel-slide">'
+SHOW_TITLE = 'title='
+DATE_TAG = 'data-cms-ai="0">'
 
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
@@ -77,7 +82,7 @@ def get_args():
 	return arg_parser.parse_args()
 
 def get_webpage(link):
-	os.system('mkdir ' + TEMP_DIR)
+	os.system('mkdir -p ' + TEMP_DIR)
 	rand_num = random.randint(0, 1000);
 	tempfile = TEMP_DIR + 'tempfile' + str(rand_num) + '.txt'
 	os.system('curl -s ' + link + ' --output ' + tempfile)
@@ -238,6 +243,43 @@ def process_show_grosses(base_link):
 		show_gross_pages.update(show_gross_page)
 		page += 1
 
+def process_previous_shows_at_theater(link):
+	previous_show_pages = dict()
+	
+	lines = get_webpage(link)
+
+	index = 0
+
+	while index < len(lines) and lines[index] != PREVIOUS_SHOWS_TAG:
+		index += 1
+
+	while index < len(lines):
+		grosses = dict()
+		week_end_date = ""
+
+		while lines[index] != PREVIOUS_SHOW_TAG:
+			index += 1
+
+			if index >= len(lines):
+				return previous_show_pages
+		
+		index += 8
+		
+		url = lines[index].replace(LINK_MARKER, '').replace('"', '')
+		index += 1
+		title = lines[index].replace(SHOW_TITLE, '').replace('"', '').replace('&#039;', "'")
+		index += 18
+		date = lines[index].replace(DATE_TAG, '')
+
+		previous_show_pages[(title, date)] = url
+
+		index += 1
+	return previous_show_pages
+
+def print_previous_shows(page_dict):
+	for (title, date) in page_dict:
+		print("Title: " + title + ", Date: " + date + ", URL: " + page_dict[(title, date)])
+
 def print_dict(jsondict):
 	print(json.dumps(jsondict, sort_keys = True, indent = 4))
 
@@ -273,10 +315,15 @@ def plot_grosses(weekly_grosses):
 if __name__ == '__main__':
 	args = get_args()
 
-	sweeney_todd = 'https://www.playbill.com/production/gross?production=651e8a52-1de9-42b8-b3f9-88a56c5c0baa'
-	wicked = 'https://www.playbill.com/production/gross?production=00000150-aea6-d936-a7fd-eef6ecdd0001'
-	hadestown = 'https://www.playbill.com/production/gross?production=00000167-5ad2-d052-a567-dfdb48060000'
-	phantom = 'https://www.playbill.com/production/gross?production=00000150-aea4-d936-a7fd-eef4dee60001'
+	# sweeney_todd = 'https://www.playbill.com/production/gross?production=651e8a52-1de9-42b8-b3f9-88a56c5c0baa'
+	# wicked = 'https://www.playbill.com/production/gross?production=00000150-aea6-d936-a7fd-eef6ecdd0001'
+	# hadestown = 'https://www.playbill.com/production/gross?production=00000167-5ad2-d052-a567-dfdb48060000'
+	# phantom = 'https://www.playbill.com/production/gross?production=00000150-aea4-d936-a7fd-eef4dee60001'
 
-	hadestown_grosses = process_show_grosses(phantom)
-	plot_grosses(hadestown_grosses)
+	# hadestown_grosses = process_show_grosses(phantom)
+	# plot_grosses(hadestown_grosses)
+
+	previous_show_pages = dict()
+	for theater in THEATERS:
+		previous_show_pages.update(process_previous_shows_at_theater(THEATERS[theater]))
+	
