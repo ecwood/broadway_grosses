@@ -84,15 +84,20 @@ MUSIC_KEY = 'music'
 LYRICS_TAG = '<span>lyrics:</span>'
 LYRICS_KEY = 'lyrics'
 RUNTIME_TAG = '<li><span>Running Time:</span>'
-RUNTIMES_KEY = 'runtime'
+RUNTIME_END_TAG = '</li>'
+RUNTIME_KEY = 'runtime'
 ADDRESS_KEY = 'address'
 DESCRIPTION_KEY = 'description'
 KEYWORDS_KEY = 'keywords'
 CAST_MEMBERS_KEY = 'cast_members'
 FIRST_PREVIEW_KEY = 'first_preview'
+OPENING_DATE_TAG = '<div class="bsp-list-promo-title">Opening Date</div>'
 OPENING_DATE_KEY = 'opening_date'
+CLOSING_DATE_TAG = '<div class="bsp-list-promo-title">Closing Date</div>'
 CLOSING_DATE_KEY = 'closing_date'
+PREVIEWS_TAG = '<div class="bsp-list-promo-title">Previews</div>'
 PREVIEWS_KEY = 'previews'
+PERFORMANCES_TAG = '<div class="bsp-list-promo-title">Performances</div>'
 AWARDS_KEY = 'awards'
 GROSS_LINK_KEY = 'gross_link'
 TOTAL_CURRENT_GROSS_KEY = 'total_current_gross'
@@ -292,7 +297,7 @@ def process_previous_shows_at_theater(link):
 		
 		url = lines[index].replace(LINK_MARKER, '').replace('"', '')
 		index += 1
-		title = lines[index].replace(SHOW_TITLE, '').replace('"', '').replace('&#039;', "'")
+		title = lines[index].replace(SHOW_TITLE, '').replace('"', '').replace('&#039;', "'").replace('&amp;', '&')
 		index += 18
 		date = lines[index].replace(DATE_TAG, '')
 
@@ -300,6 +305,24 @@ def process_previous_shows_at_theater(link):
 
 		index += 1
 	return previous_show_pages
+
+def get_set_of_people(line):
+	set_of_people = dict()
+	people = line.split(', ')
+	for person in people:
+		name = process_span_line(person)
+		name_url = person.replace(LINK_MARKER, '').split(' ')[0].strip('"')
+		set_of_people[name] = name_url
+	return set_of_people
+
+def format_date(month, day, year):
+	month = process_span_line(month)
+	day = process_span_line(day)
+	year = process_span_line(year)
+
+	if len(day) > 0 and len(year) > 0:
+		return month + " " + day + ", " + year
+	return month
 
 def get_show_facts(link):
 	show_facts = dict()
@@ -312,7 +335,21 @@ def get_show_facts(link):
 		line = lines[index]
 
 		if line == BOOK_TAG:
-			show_facts[BOOK_KEY] = process_span_line(lines[index + 1])
+			show_facts[BOOK_KEY] = get_set_of_people(lines[index + 1])
+		if line == MUSIC_TAG:
+			show_facts[MUSIC_KEY] = get_set_of_people(lines[index + 1])
+		if line == LYRICS_TAG:
+			show_facts[LYRICS_KEY] = get_set_of_people(lines[index + 1])
+		if line.startswith(RUNTIME_TAG):
+			show_facts[RUNTIME_KEY] = lines[index].replace(RUNTIME_TAG, '').replace(RUNTIME_END_TAG, '').strip()
+		if line == OPENING_DATE_TAG:
+			show_facts[OPENING_DATE_KEY] = format_date(lines[index + 5], lines[index + 6], lines[index + 7])
+		if line == CLOSING_DATE_TAG:
+			show_facts[CLOSING_DATE_KEY] = format_date(lines[index + 5], lines[index + 6], lines[index + 7])
+		if line == PREVIEWS_TAG:
+			show_facts[PREVIEWS_KEY] = process_span_line(lines[index + 5])
+		if line == PERFORMANCES_TAG:
+			show_facts[PERFORMANCES_KEY] = process_span_line(lines[index + 6])
 
 		index += 1
 
