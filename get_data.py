@@ -100,9 +100,13 @@ PREVIEWS_KEY = 'previews'
 PERFORMANCES_TAG = '<div class="bsp-list-promo-title">Performances</div>'
 AWARDS_KEY = 'awards'
 GROSS_LINK_KEY = 'gross_link'
+TOTAL_CURRENT_GROSS_TAG = '<b>Total Current Gross:</b>'
 TOTAL_CURRENT_GROSS_KEY = 'total_current_gross'
+HIGHEST_WEEKLY_GROSS_TAG = '<b>Highest Weekly Gross:</b>'
 HIGHEST_WEEKLY_GROSS_KEY = 'highest_weekly_gross'
+AVERAGE_TICKET_PRICE_TAG = '<b>Average Ticket Price:</b>'
 AVERAGE_TICKET_PRICE_KEY = 'average_ticket_price'
+AVERAGE_PERCENT_CAPACITY_TAG = '<b>Average % Capacity:</b>'
 AVERAGE_PERCENT_CAPACITY_KEY = 'average_percent_capacity'
 
 
@@ -350,6 +354,14 @@ def get_show_facts(link):
 			show_facts[PREVIEWS_KEY] = process_span_line(lines[index + 5])
 		if line == PERFORMANCES_TAG:
 			show_facts[PERFORMANCES_KEY] = process_span_line(lines[index + 6])
+		if line == TOTAL_CURRENT_GROSS_TAG:
+			show_facts[TOTAL_CURRENT_GROSS_KEY] = lines[index + 1]
+		if line == HIGHEST_WEEKLY_GROSS_TAG:
+			show_facts[HIGHEST_WEEKLY_GROSS_KEY] = lines[index + 1]
+		if line == AVERAGE_TICKET_PRICE_TAG:
+			show_facts[AVERAGE_TICKET_PRICE_KEY] = lines[index + 1]
+		if line == AVERAGE_PERCENT_CAPACITY_TAG:
+			show_facts[AVERAGE_PERCENT_CAPACITY_KEY] = lines[index + 1]
 
 		index += 1
 
