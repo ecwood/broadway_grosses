@@ -76,6 +76,31 @@ PREVIOUS_SHOW_TAG = '<div class="bsp-carousel-slide">'
 SHOW_TITLE = 'title='
 DATE_TAG = 'data-cms-ai="0">'
 
+# Facts Keys/Tags
+BOOK_TAG = '<span>book:</span>'
+BOOK_KEY = 'book'
+MUSIC_TAG = '<span>music:</span>'
+MUSIC_KEY = 'music'
+LYRICS_TAG = '<span>lyrics:</span>'
+LYRICS_KEY = 'lyrics'
+RUNTIME_TAG = '<li><span>Running Time:</span>'
+RUNTIMES_KEY = 'runtime'
+ADDRESS_KEY = 'address'
+DESCRIPTION_KEY = 'description'
+KEYWORDS_KEY = 'keywords'
+CAST_MEMBERS_KEY = 'cast_members'
+FIRST_PREVIEW_KEY = 'first_preview'
+OPENING_DATE_KEY = 'opening_date'
+CLOSING_DATE_KEY = 'closing_date'
+PREVIEWS_KEY = 'previews'
+AWARDS_KEY = 'awards'
+GROSS_LINK_KEY = 'gross_link'
+TOTAL_CURRENT_GROSS_KEY = 'total_current_gross'
+HIGHEST_WEEKLY_GROSS_KEY = 'highest_weekly_gross'
+AVERAGE_TICKET_PRICE_KEY = 'average_ticket_price'
+AVERAGE_PERCENT_CAPACITY_KEY = 'average_percent_capacity'
+
+
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
 	# arg_parser.add_argument('inputLink', type=str)
@@ -276,6 +301,23 @@ def process_previous_shows_at_theater(link):
 		index += 1
 	return previous_show_pages
 
+def get_show_facts(link):
+	show_facts = dict()
+	
+	lines = get_webpage(link)
+
+	index = 0
+
+	while index < len(lines):
+		line = lines[index]
+
+		if line == BOOK_TAG:
+			show_facts[BOOK_KEY] = process_span_line(lines[index + 1])
+
+		index += 1
+
+	return show_facts
+
 def print_previous_shows(page_dict):
 	for (title, date) in page_dict:
 		print("Title: " + title + ", Date: " + date + ", URL: " + page_dict[(title, date)])
@@ -325,5 +367,8 @@ if __name__ == '__main__':
 
 	previous_show_pages = dict()
 	for theater in THEATERS:
-		previous_show_pages.update(process_previous_shows_at_theater(THEATERS[theater]))
+		previous_show_pages.update(process_previous_shows_at_theater(THEATERS["Walter Kerr Theatre"]))
+		for previous_show_page in previous_show_pages:
+			print(previous_show_page, get_show_facts(previous_show_pages[previous_show_page]))
+		break
 	
