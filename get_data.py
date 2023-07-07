@@ -367,7 +367,6 @@ def format_date(month, day, year):
 	return month
 
 def process_cast_member(cast_lines, previous_role, auto_replacement):
-	print_dict(cast_lines)
 	cast_member = dict()
 
 	cast_member[REPLACEMENT_KEY] = False
@@ -459,22 +458,22 @@ def get_cast_information(link):
 			if "Other Music Replacements" in lines[index]:
 				auto_replacement = True
 				tag = "Other Music Replacements"
-			if "Other Cast Replacements" in lines[index]:
+			elif "Other Cast Replacements" in lines[index]:
 				auto_replacement = True
 				tag = "Other Cast Replacements"
-			if "Other Production Team Replacements" in lines[index]:
+			elif "Other Production Team Replacements" in lines[index]:
 				auto_replacement = True
 				tag = "Other Production Team Replacements"
-			if "Production Team" in lines[index]:
+			elif "Production Team" in lines[index]:
 				auto_replacement = False
 				tag = "Production Team"
-			if "Standbys, Understudies, and Swings" in lines[index]:
+			elif "Standbys, Understudies, and Swings" in lines[index]:
 				auto_replacement = False
 				tag = "Standbys, Understudies, and Swings"
-			if "Music" in lines[index]:
+			elif "Music" in lines[index]:
 				auto_replacement = False
 				tag = "Music"
-			if "Cast" in lines[index]:
+			elif "Cast" in lines[index]:
 				auto_replacement = False
 				tag = "Cast"
 			index += 1
