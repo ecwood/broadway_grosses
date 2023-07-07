@@ -495,7 +495,6 @@ def get_cast_information(link):
 							 ROLE_KEY: cast_member[3].split(";"),
 							 CAST_LINK_KEY: cast_member[4],
 							 TAG_KEY: cast_member[5]})
-	print_dict(cast_members)
 	return cast_members
 
 
@@ -533,7 +532,10 @@ def get_show_facts(link):
 			show_facts[AVERAGE_TICKET_PRICE_KEY] = lines[index + 1]
 		if line == AVERAGE_PERCENT_CAPACITY_TAG:
 			show_facts[AVERAGE_PERCENT_CAPACITY_KEY] = lines[index + 1]
-
+		if "personlistpage" in line and show_facts.get(CAST_MEMBERS_KEY, None) is None:
+			cast_url = line.replace(LINK_MARKER, '').replace('"', '').replace('&amp;', '&')
+			print(cast_url)
+			show_facts[CAST_MEMBERS_KEY] = get_cast_information(cast_url)
 		index += 1
 
 	return show_facts
@@ -585,14 +587,11 @@ if __name__ == '__main__':
 	# hadestown_grosses = process_show_grosses(phantom)
 	# plot_grosses(hadestown_grosses)
 
-	# previous_show_pages = dict()
-	# for theater in THEATERS:
-	# 	previous_show_pages.update(process_previous_shows_at_theater(THEATERS["Walter Kerr Theatre"]))
-	# 	for previous_show_page in previous_show_pages:
-	# 		print(previous_show_page, get_show_facts(previous_show_pages[previous_show_page]))
-	# 	break
+	previous_show_pages = dict()
+	for theater in THEATERS:
+		previous_show_pages.update(process_previous_shows_at_theater(THEATERS["Walter Kerr Theatre"]))
+		for previous_show_page in previous_show_pages:
+			print(previous_show_page, get_show_facts(previous_show_pages[previous_show_page]))
+		break
 
-	# url = 'https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc'
-	# r = requests.get(url)
-	# print(r.content)
-	get_cast_information('https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc')
+	# get_cast_information('https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc')
