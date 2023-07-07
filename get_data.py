@@ -150,7 +150,7 @@ def get_hard_to_get_webpage(link):
 
 	lines = []
 	for line in str(url_result.content).split('\\n'):
-		line = line.replace('\\t', '\t')
+		line = line.replace('\\t', '\t').replace('\\"', '"')
 		lines.append(line.strip())
 
 	return lines
@@ -355,13 +355,12 @@ def format_date(month, day, year):
 	return month
 
 def process_cast_member(cast_lines):
-	# print(cast_lines)
-	print("Test")
+	print_dict(cast_lines)
 
 def get_cast_information(link):
 	cast_information = dict()
 	
-	lines = get_webpage(link)
+	lines = get_hard_to_get_webpage(link)
 
 	index = 0
 
@@ -374,12 +373,13 @@ def get_cast_information(link):
 
 	while index < len(lines):
 		cast_lines = []
-		if lines[index] == CAST_MEMBER_START_TAG or lines[index] == CAST_MEMBER_REPLACEMENT_START_TAG:
-			while index < len(lines) and lines[index] != CAST_MEMBER_END_TAG:
-				cast_lines.append(lines[index])
-				index += 1
+		while index < len(lines) and lines[index] != CAST_MEMBER_START_TAG and not lines[index].startswith(CAST_MEMBER_REPLACEMENT_START_TAG):
+			index += 1
+		
+		while index < len(lines) and lines[index] != CAST_MEMBER_END_TAG:
+			cast_lines.append(lines[index])
+			index += 1
 		process_cast_member(cast_lines)
-		break
 		index += 1
 
 
@@ -479,4 +479,4 @@ if __name__ == '__main__':
 	# url = 'https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc'
 	# r = requests.get(url)
 	# print(r.content)
-	print_dict(get_hard_to_get_webpage('https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc'))
+	get_cast_information('https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc')
