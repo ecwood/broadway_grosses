@@ -127,7 +127,7 @@ DATES_KEY = 'dates'
 NAME_KEY = 'name'
 ROLE_KEY = 'role'
 CAST_LINK_KEY = 'link'
-CAST_KEY = 'cast'
+TAG_KEY = 'tag'
 
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
@@ -367,7 +367,7 @@ def format_date(month, day, year):
 	return month
 
 def process_cast_member(cast_lines, previous_role, auto_replacement):
-	# print_dict(cast_lines)
+	print_dict(cast_lines)
 	cast_member = dict()
 
 	cast_member[REPLACEMENT_KEY] = False
@@ -384,11 +384,18 @@ def process_cast_member(cast_lines, previous_role, auto_replacement):
 			cast_member[NAME_KEY] = process_span_line(cast_lines[index])
 			cast_member[CAST_LINK_KEY] = cast_lines[index].replace(LINK_MARKER, '').split(' ')[0].strip('\\"')
 			index += 3
-			if cast_lines[index] != '</li>':
-				cast_member[ROLE_KEY] = cast_lines[index].replace('<br>', '')
-				previous_role = cast_member[ROLE_KEY]
-			else:
+
+			roles = []
+			if cast_lines[index] == '</li>':
 				cast_member[REPLACEMENT_KEY] = True
+			
+			while cast_lines[index] != '</li>':
+				roles.append(cast_lines[index].replace('<br>', ''))
+				index += 1	
+			if len(roles) > 0:
+				cast_member[ROLE_KEY] = roles
+				previous_role = cast_member[ROLE_KEY]
+
 		if cast_lines[index] == CAST_MEMBER_DATE_TAG:
 			index += 1
 			if CAST_MEMBER_ARRIVED_TAG in cast_lines[index]:
@@ -443,17 +450,33 @@ def get_cast_information(link):
 	cast_members = list()
 
 	auto_replacement = False
-	cast = True
+
+	tag = ""
 
 	while index < len(lines):
 		cast_lines = []
 		while index < len(lines) and lines[index] != CAST_MEMBER_START_TAG and lines[index] != CAST_MEMBER_REPLACEMENT_START_TAG:
-			if "Other Music Replacements" in lines[index] or "Other Production Team Replacements" in lines[index]:
+			if "Other Music Replacements" in lines[index]:
 				auto_replacement = True
-			if "Production Team" in lines[index] or "Standbys, Understudies, and Swings" in lines[index]:
+				tag = "Other Music Replacements"
+			if "Other Cast Replacements" in lines[index]:
+				auto_replacement = True
+				tag = "Other Cast Replacements"
+			if "Other Production Team Replacements" in lines[index]:
+				auto_replacement = True
+				tag = "Other Production Team Replacements"
+			if "Production Team" in lines[index]:
 				auto_replacement = False
+				tag = "Production Team"
+			if "Standbys, Understudies, and Swings" in lines[index]:
+				auto_replacement = False
+				tag = "Standbys, Understudies, and Swings"
 			if "Music" in lines[index]:
-				cast = False
+				auto_replacement = False
+				tag = "Music"
+			if "Cast" in lines[index]:
+				auto_replacement = False
+				tag = "Cast"
 			index += 1
 		
 		while index < len(lines) and lines[index] != CAST_MEMBER_END_TAG:
@@ -462,7 +485,7 @@ def get_cast_information(link):
 		cast_member, previous_role = process_cast_member(cast_lines, previous_role, auto_replacement)
 
 		if REPLACEMENT_KEY in cast_member and DATES_KEY in cast_member and NAME_KEY in cast_member and ROLE_KEY in cast_member and CAST_LINK_KEY in cast_member:
-			cast_members_unique.add((cast_member[REPLACEMENT_KEY], ";".join(cast_member[DATES_KEY]), cast_member[NAME_KEY], cast_member[ROLE_KEY], cast_member[CAST_LINK_KEY], cast))
+			cast_members_unique.add((cast_member[REPLACEMENT_KEY], ";".join(cast_member[DATES_KEY]), cast_member[NAME_KEY], ";".join(cast_member[ROLE_KEY]), cast_member[CAST_LINK_KEY], tag))
 
 		index += 1
 
@@ -470,9 +493,9 @@ def get_cast_information(link):
 		cast_members.append({REPLACEMENT_KEY: cast_member[0],
 							 DATES_KEY: cast_member[1].split(";"),
 							 NAME_KEY: cast_member[2],
-							 ROLE_KEY: cast_member[3],
+							 ROLE_KEY: cast_member[3].split(";"),
 							 CAST_LINK_KEY: cast_member[4],
-							 CAST_KEY: cast_member[5]})
+							 TAG_KEY: cast_member[5]})
 	print_dict(cast_members)
 	return cast_members
 
