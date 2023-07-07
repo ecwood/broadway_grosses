@@ -3,6 +3,7 @@ import json
 import argparse
 import random
 from matplotlib import pyplot as plt
+import requests
 
 TEMP_DIR = 'temp/'
 
@@ -109,24 +110,49 @@ AVERAGE_TICKET_PRICE_KEY = 'average_ticket_price'
 AVERAGE_PERCENT_CAPACITY_TAG = '<b>Average % Capacity:</b>'
 AVERAGE_PERCENT_CAPACITY_KEY = 'average_percent_capacity'
 
+# Cast Keys and Tags
+CAST_START_TAG = '<div class="bsp-component cast-list" id="cc">'
+CAST_MEMBER_START_TAG = '<li>'
+CAST_MEMBER_REPLACEMENT_START_TAG = '<span class="cast-list-subheading hide">'
+CAST_MEMBER_END_TAG = '</ul>'
+
 
 def get_args():
 	arg_parser = argparse.ArgumentParser(description='get_data.py: get Playbill Broadway Grosses data')
 	# arg_parser.add_argument('inputLink', type=str)
 	return arg_parser.parse_args()
 
-def get_webpage(link):
+def make_tempfile():
 	os.system('mkdir -p ' + TEMP_DIR)
-	rand_num = random.randint(0, 1000);
+	rand_num = random.randint(0, 1000)
 	tempfile = TEMP_DIR + 'tempfile' + str(rand_num) + '.txt'
+	return tempfile
+
+def remove_tempfile(tempfile):
+	os.system('rm ' + tempfile)
+	os.system('rm -r ' + TEMP_DIR)
+
+def get_webpage(link):
+	tempfile = make_tempfile()
+	
 	os.system('curl -s ' + link + ' --output ' + tempfile)
 
 	lines = []
 	for line in open(tempfile, 'r'):
 		lines.append(line.strip())
 
-	os.system('rm ' + tempfile)
-	os.system('rm -r ' + TEMP_DIR)
+	remove_tempfile(tempfile)
+
+	return lines
+
+def get_hard_to_get_webpage(link):
+	url_result = requests.get(link)
+
+	lines = []
+	for line in str(url_result.content).split('\\n'):
+		line = line.replace('\\t', '\t')
+		lines.append(line.strip())
+
 	return lines
 
 def process_span_line(line):
@@ -328,6 +354,35 @@ def format_date(month, day, year):
 		return month + " " + day + ", " + year
 	return month
 
+def process_cast_member(cast_lines):
+	# print(cast_lines)
+	print("Test")
+
+def get_cast_information(link):
+	cast_information = dict()
+	
+	lines = get_webpage(link)
+
+	index = 0
+
+	while index < len(lines) and lines[index] != CAST_START_TAG:
+		index += 1
+
+	index += 2
+
+	role_type = process_span_line(lines[index])
+
+	while index < len(lines):
+		cast_lines = []
+		if lines[index] == CAST_MEMBER_START_TAG or lines[index] == CAST_MEMBER_REPLACEMENT_START_TAG:
+			while index < len(lines) and lines[index] != CAST_MEMBER_END_TAG:
+				cast_lines.append(lines[index])
+				index += 1
+		process_cast_member(cast_lines)
+		break
+		index += 1
+
+
 def get_show_facts(link):
 	show_facts = dict()
 	
@@ -414,10 +469,14 @@ if __name__ == '__main__':
 	# hadestown_grosses = process_show_grosses(phantom)
 	# plot_grosses(hadestown_grosses)
 
-	previous_show_pages = dict()
-	for theater in THEATERS:
-		previous_show_pages.update(process_previous_shows_at_theater(THEATERS["Walter Kerr Theatre"]))
-		for previous_show_page in previous_show_pages:
-			print(previous_show_page, get_show_facts(previous_show_pages[previous_show_page]))
-		break
-	
+	# previous_show_pages = dict()
+	# for theater in THEATERS:
+	# 	previous_show_pages.update(process_previous_shows_at_theater(THEATERS["Walter Kerr Theatre"]))
+	# 	for previous_show_page in previous_show_pages:
+	# 		print(previous_show_page, get_show_facts(previous_show_pages[previous_show_page]))
+	# 	break
+
+	# url = 'https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc'
+	# r = requests.get(url)
+	# print(r.content)
+	print_dict(get_hard_to_get_webpage('https://www.playbill.com/personlistpage/person-list?production=00000167-5ad2-d052-a567-dfdb48060000&type=op#cc'))
