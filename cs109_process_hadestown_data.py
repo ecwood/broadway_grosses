@@ -8,7 +8,7 @@ SKIP_WEEKS = ['2019-03-24', '2021-09-05']
 
 MAX_EARNINGS = 1700000.00
 
-NUM_GROUPINGS = 20
+NUM_GROUPINGS = 10
 
 
 def uniform_weightings(data):
@@ -25,16 +25,14 @@ def uniform_weightings(data):
 def nearest_grouped_week_weightings(data, num_weeks_to_group):
 	normalization_constant = 0
 
-	num_groups_total = int(len(data) / num_weeks_to_group)
-
 	week_index = 0
 	for data_point in data:
-		normalization_constant += (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (num_groups_total - int(week_index / num_weeks_to_group))
+		normalization_constant += (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (int(week_index / num_weeks_to_group) + 1)
 		week_index += 1
 
 	week_index = 0
 	for data_point in data:
-		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (num_groups_total - int(week_index / num_weeks_to_group)) / normalization_constant
+		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (int(week_index / num_weeks_to_group) + 1) / normalization_constant
 		week_index += 1
 
 	return data
