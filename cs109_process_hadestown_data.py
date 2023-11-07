@@ -8,6 +8,8 @@ SKIP_WEEKS = ['2019-03-24', '2021-09-05']
 
 MAX_EARNINGS = 1700000.00
 
+NUM_GROUPINGS = 20
+
 
 def uniform_weightings(data):
 	normalization_constant = 0
@@ -61,6 +63,8 @@ def divide_into_regions(weighted_data, num_regions):
 	region_bound = MAX_EARNINGS / num_regions
 	regions = [0] * num_regions
 
+	earning_range_to_weighting = dict()
+
 	for weighted_data_point in weighted_data:
 		region_index = int(float(weighted_data_point[GROSS_KEY]) / region_bound)
 		regions[region_index] += weighted_data_point[WEIGHTING_KEY]
@@ -69,7 +73,9 @@ def divide_into_regions(weighted_data, num_regions):
 		lower_range = format_monetary_value(str(region_bound * region_index))
 		upper_range = format_monetary_value(str(region_bound * (region_index + 1)))
 		earning_range = lower_range + '-' + upper_range
-		print(earning_range + '\t' + str(regions[region_index]))
+		earning_range_to_weighting[earning_range] = regions[region_index]
+
+	return earning_range_to_weighting
 
 
 def import_data():
@@ -91,10 +97,48 @@ def import_data():
 	return data
 
 
+def update_dictionary(new_dictionary, key, existing_dictionary):
+	for dict_key in new_dictionary:
+		if dict_key not in existing_dictionary:
+			existing_dictionary[dict_key] = dict()
+		existing_dictionary[dict_key][key] = new_dictionary[dict_key]
+
+	return existing_dictionary
+
+
+def earning_range_dictionary_to_tsv(earning_range_to_weightings):
+	weightings = list()
+	for earning_range in earning_range_to_weightings:
+		weightings = earning_range_to_weightings[earning_range].keys()
+
+		header = "Earning Range\t"
+		for weighting in weightings:
+			header += weighting + "\t"
+		header.strip()
+		break
+
+	print(header)
+
+	for earning_range in earning_range_to_weightings:
+		line_str = earning_range + "\t"
+		for weighting in weightings:
+			line_str += str(earning_range_to_weightings[earning_range][weighting]) + "\t"
+		line_str.strip()
+
+		print(line_str)
+
+
+
 if __name__ == '__main__':
 	hadestown_data = import_data()
 
-	for x in range(1, 52):
+	earning_range_to_weightings = dict()
+
+	for x in range(1, 52, 3):
 		hadestown_weighted_data = nearest_grouped_week_weightings(hadestown_data, x)
-		divide_into_regions(hadestown_weighted_data, 10)
-		print("\n")
+		update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Groupings of ' + str(x) + ' Weeks', earning_range_to_weightings)
+
+	hadestown_weighted_data = uniform_weightings(hadestown_data)
+	update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Uniform', earning_range_to_weightings)
+
+	earning_range_dictionary_to_tsv(earning_range_to_weightings)
