@@ -1,3 +1,5 @@
+import json
+
 WEEK_DATE_KEY = 'week_date'
 WEEK_KEY = 'week'
 YEAR_KEY = 'year'
@@ -12,12 +14,8 @@ NUM_GROUPINGS = 30
 
 
 def uniform_weightings(data):
-	normalization_constant = 0
 	for data_point in data:
-		normalization_constant += (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * 1
-
-	for data_point in data:
-		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * 1 / normalization_constant
+		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * 1
 
 	return data
 
@@ -125,6 +123,13 @@ def earning_range_dictionary_to_tsv(earning_range_to_weightings):
 
 		print(line_str)
 
+def save_weightings_list_json(hadestown_weighted_data):
+	weightings_list = []
+	for weighting in hadestown_weighted_data:
+		weightings_list += [weighting[GROSS_KEY]] * weighting[WEIGHTING_KEY]
+
+	with open('hadestown_weightings.json', 'w') as hadestown_weightings_file:
+		hadestown_weightings_file.write(json.dumps(weightings_list, indent=4, sort_keys=True))
 
 
 if __name__ == '__main__':
@@ -132,11 +137,6 @@ if __name__ == '__main__':
 
 	earning_range_to_weightings = dict()
 
-	# for x in range(1, 52, 3):
-	# 	hadestown_weighted_data = nearest_grouped_week_weightings(hadestown_data, x)
-	# 	update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Groupings of ' + str(x) + ' Weeks', earning_range_to_weightings)
-
 	hadestown_weighted_data = uniform_weightings(hadestown_data)
-	update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Uniform', earning_range_to_weightings)
 
-	earning_range_dictionary_to_tsv(earning_range_to_weightings)
+	save_weightings_list_json(hadestown_weighted_data)
