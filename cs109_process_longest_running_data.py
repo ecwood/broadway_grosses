@@ -53,9 +53,43 @@ def list_average(vals):
 
 	return list_sum / len(vals)
 
+def list_sum(vals):
+	list_sum = 0
+
+	for val in vals:
+		list_sum += val
+
+	return list_sum
+
+def get_yearly_weighting(year_data):
+	yearly_weighting = dict()
+
+	all_grosses = list()
+
+	for (_, _, _, gross) in year_data:
+		all_grosses.append(gross)
+
+	yearly_average = list_average(all_grosses)
+
+	for (_, week, _, gross) in year_data:
+		yearly_weighting[week] = gross / yearly_average
+
+	return yearly_weighting
 
 
 if __name__ == '__main__':
 	data = import_data()
 
-	print(json.dumps(data, sort_keys=True, indent=4))
+	all_weightings = dict()
+
+	for show in data:
+		for year_data in data[show]:
+			yearly_weighting = get_yearly_weighting(year_data)
+
+			for week in yearly_weighting:
+				if week not in all_weightings:
+					all_weightings[week] = list()
+				all_weightings[week].append(yearly_weighting[week])
+
+	for week in all_weightings:
+		print(week, list_average(all_weightings[week]))
