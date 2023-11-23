@@ -172,6 +172,10 @@ def print_weekly_weighting_stats(weekly_weighting_lists, weightings_map):
 		print("\tWeekly Multiple Minimum: " + str(min_weighting) + " on " + min_week_date + " by " + min_show)
 		print("\tWeekly Multiple Maximum: " + str(max_weighting) + " on " + max_week_date + " by " + max_show)
 
+def save_weekly_weightings_list_json(weekly_weighting_lists):
+	with open('weekly_weightings.json', 'w') as weightings_file:
+		weightings_file.write(json.dumps(weekly_weighting_lists, indent=4, sort_keys=True))
+
 if __name__ == '__main__':
 	data = import_data()
 
@@ -180,4 +184,6 @@ if __name__ == '__main__':
 	weekly_weighting_lists, weightings_map = break_down_show_weightings(show_weightings)
 
 	print_weekly_weighting_stats(weekly_weighting_lists, weightings_map)
+
+	save_weekly_weightings_list_json(weekly_weighting_lists)
 
