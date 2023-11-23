@@ -6,15 +6,21 @@ SKIP_WEEKS = ['2001-09-16', '2001-09-23', '2007-11-18', '2007-11-25', '2021-09-0
 
 LAST_WEEK_PRE_COVID = '2020-03-08'
 
+SHOWS_PER_WEEK = 8
+
 def import_data():
 	data = dict()
 
 	week_definitions = dict()
 
 	with open('cs109_week_definitions.tsv') as week_defs_data:
+		index = 0
 		for data_line in week_defs_data:
+			index += 1
+			if index == 1:
+				continue
 			data_line_split = data_line.strip().split('\t')
-			week_num = data_line_split[0]
+			week_num = int(data_line_split[0])
 
 			for week_date in data_line_split[1:]:
 				week_definitions["-" + week_date] = week_num
@@ -30,6 +36,7 @@ def import_data():
 			week = week_definitions[week_date.replace(year, '')]
 			
 			gross = float(data_line_split[4])
+			num_shows = int(data_line_split[5])
 
 			if show not in data:
 				data[show] = list()
@@ -40,7 +47,11 @@ def import_data():
 					data[show].pop()
 					continue
 
-				data[show][-1].append((week_date, week, year, gross))
+				effective_gross = gross
+
+				if num_shows < SHOWS_PER_WEEK:
+					effective_gross = SHOWS_PER_WEEK * (gross / num_shows)
+				data[show][-1].append((week_date, week, year, effective_gross))
 
 		zero_size = list()
 		for show in data:
@@ -58,7 +69,7 @@ def import_data():
 	return data
 
 
-def list_average(vals):
+def calculate_expectation(vals):
 	list_sum = 0
 
 	for val in vals:
@@ -74,7 +85,7 @@ def list_sum(vals):
 
 	return list_sum
 
-def list_max(vals):
+def calculate_maximum(vals):
 	maximum = 0
 
 	for val in vals:
@@ -83,7 +94,7 @@ def list_max(vals):
 
 	return maximum
 
-def list_min(vals):
+def calculate_minimum(vals):
 	minimum = 100
 
 	for val in vals:
@@ -91,6 +102,16 @@ def list_min(vals):
 			minimum = val
 
 	return minimum
+
+def calculate_variance(vals):
+	variance_data = list()
+	average = calculate_expectation(vals)
+
+	for datapoint in vals:
+		variance_data.append(pow(average - datapoint, 2))
+
+	return calculate_expectation(variance_data)
+
 
 def get_yearly_weighting(year_data):
 	yearly_weighting = dict()
@@ -100,21 +121,18 @@ def get_yearly_weighting(year_data):
 	for (_, _, _, gross) in year_data:
 		all_grosses.append(gross)
 
-	yearly_average = list_average(all_grosses)
+	yearly_average = calculate_expectation(all_grosses)
 
 	for (week_date, week, year, gross) in year_data:
 		yearly_weighting[week] = (gross / yearly_average, year, week_date)
 
 	return yearly_weighting
 
-
-if __name__ == '__main__':
-	data = import_data()
-
+def get_show_weightings(all_shows_data):
 	all_weightings = dict()
 
-	for show in data:
-		for year_data in data[show]:
+	for show in all_shows_data:
+		for year_data in all_shows_data[show]:
 			yearly_weighting = get_yearly_weighting(year_data)
 
 			for week in yearly_weighting:
@@ -122,20 +140,44 @@ if __name__ == '__main__':
 				if week not in all_weightings:
 					all_weightings[week] = list()
 				all_weightings[week].append((weekly_weighting, show, year, week_date))
+	
+	return all_weightings
 
-	all_weightings_simple = dict()
+def break_down_show_weightings(show_weightings):
+	weekly_weighting_lists = dict()
 	weightings_map = dict()
 
-	for week in all_weightings:
-		for (weekly_weighting, show, year, week_date) in all_weightings[week]:
-			if week not in all_weightings_simple:
-				all_weightings_simple[week] = list()
-			all_weightings_simple[week].append(weekly_weighting)
+	for week in show_weightings:
+		for (weekly_weighting, show, year, week_date) in show_weightings[week]:
+			if week not in weekly_weighting_lists:
+				weekly_weighting_lists[week] = list()
+			weekly_weighting_lists[week].append(weekly_weighting)
 
 			weightings_map[weekly_weighting] = (week_date, show, year)
 
+	return weekly_weighting_lists, weightings_map
 
-	for week in all_weightings:
-		min_weighting = list_min(all_weightings_simple[week])
-		max_weighting = list_max(all_weightings_simple[week])
-		print(week, list_average(all_weightings_simple[week]), min_weighting, weightings_map[min_weighting], max_weighting, weightings_map[max_weighting])
+def print_weekly_weighting_stats(weekly_weighting_lists, weightings_map):
+	for week in sorted(weekly_weighting_lists.keys()):
+		weighting_list = weekly_weighting_lists[week]
+		expectation = calculate_expectation(weighting_list)
+		variance = calculate_variance(weighting_list)
+		print("Week " + str(week))
+		print("\tWeekly Multiple Expectation: " + str(expectation))
+		print("\tWeekly Multiple Variance: " + str(variance))
+		min_weighting = calculate_minimum(weighting_list)
+		(min_week_date, min_show, min_year) = weightings_map[min_weighting]
+		max_weighting = calculate_maximum(weighting_list)
+		(max_week_date, max_show, max_year) = weightings_map[max_weighting]
+		print("\tWeekly Multiple Minimum: " + str(min_weighting) + " on " + min_week_date + " by " + min_show)
+		print("\tWeekly Multiple Maximum: " + str(max_weighting) + " on " + max_week_date + " by " + max_show)
+
+if __name__ == '__main__':
+	data = import_data()
+
+	show_weightings = get_show_weightings(data)
+
+	weekly_weighting_lists, weightings_map = break_down_show_weightings(show_weightings)
+
+	print_weekly_weighting_stats(weekly_weighting_lists, weightings_map)
+
