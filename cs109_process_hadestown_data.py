@@ -21,16 +21,9 @@ def uniform_weightings(data):
 
 
 def nearest_grouped_week_weightings(data, num_weeks_to_group):
-	normalization_constant = 0
-
 	week_index = 0
 	for data_point in data:
-		normalization_constant += (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (int(week_index / num_weeks_to_group) + 1)
-		week_index += 1
-
-	week_index = 0
-	for data_point in data:
-		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (int(week_index / num_weeks_to_group) + 1) / normalization_constant
+		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (int(week_index / num_weeks_to_group) + 1)
 		week_index += 1
 
 	return data
@@ -137,6 +130,9 @@ if __name__ == '__main__':
 
 	earning_range_to_weightings = dict()
 
-	hadestown_weighted_data = uniform_weightings(hadestown_data)
+	# hadestown_weighted_data = uniform_weightings(hadestown_data)
+
+	# Group by the month
+	hadestown_weighted_data = nearest_grouped_week_weightings(hadestown_data, 4)
 
 	save_weightings_list_json(hadestown_weighted_data)
