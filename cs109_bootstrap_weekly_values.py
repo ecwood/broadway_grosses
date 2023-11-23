@@ -1,7 +1,9 @@
 import json
 import random
 
-BOOTSTRAPPING_ROUNDS = 100000
+BOOTSTRAPPING_ROUNDS = 1000000
+
+MAX_EARNINGS = 4500000.00
 
 def run_bootstrapping(hadestown_grosses, multiplier_distribution):
 	weekly_distribution = list()
@@ -57,7 +59,6 @@ def format_monetary_value(raw_string):
 	return '$' + major_monetary_val.strip(',') + '.' + decimal
 
 
-
 def divide_into_regions(weighted_data, num_regions):
 	region_bound = MAX_EARNINGS / num_regions
 	regions = [0] * num_regions
@@ -65,8 +66,8 @@ def divide_into_regions(weighted_data, num_regions):
 	earning_range_to_weighting = dict()
 
 	for weighted_data_point in weighted_data:
-		region_index = int(float(weighted_data_point[GROSS_KEY]) / region_bound)
-		regions[region_index] += weighted_data_point[WEIGHTING_KEY]
+		region_index = int(weighted_data_point / region_bound)
+		regions[region_index] += 1
 
 	for region_index in range(len(regions)):
 		lower_range = format_monetary_value(str(region_bound * region_index))
@@ -77,6 +78,14 @@ def divide_into_regions(weighted_data, num_regions):
 	return earning_range_to_weighting
 
 
+def earning_range_dictionary_to_tsv(earning_range_to_weightings):
+	weightings = list()
+	for earning_range in earning_range_to_weightings:
+		line_str = earning_range + "\t"
+		line_str += str(earning_range_to_weightings[earning_range]) + "\t"
+		line_str.strip()
+
+		print(line_str)
 
 def import_data():
 	hadestown_grosses = list()
@@ -96,5 +105,8 @@ if __name__ == '__main__':
 
 	for week in multiplier_distributions:
 		weekly_distributions[week] = run_bootstrapping(hadestown_grosses, multiplier_distributions[week])
+		print("Week " + week + ":")
+		earning_range_dictionary_to_tsv(divide_into_regions(weekly_distributions[week], 30))
+		print("===================================================")
 
 	print_weekly_distribution_stats(weekly_distributions)
