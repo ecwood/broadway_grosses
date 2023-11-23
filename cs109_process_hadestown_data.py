@@ -8,7 +8,7 @@ SKIP_WEEKS = ['2019-03-24', '2021-09-05']
 
 MAX_EARNINGS = 1700000.00
 
-NUM_GROUPINGS = 10
+NUM_GROUPINGS = 30
 
 
 def uniform_weightings(data):
@@ -132,9 +132,9 @@ if __name__ == '__main__':
 
 	earning_range_to_weightings = dict()
 
-	for x in range(1, 52, 3):
-		hadestown_weighted_data = nearest_grouped_week_weightings(hadestown_data, x)
-		update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Groupings of ' + str(x) + ' Weeks', earning_range_to_weightings)
+	# for x in range(1, 52, 3):
+	# 	hadestown_weighted_data = nearest_grouped_week_weightings(hadestown_data, x)
+	# 	update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Groupings of ' + str(x) + ' Weeks', earning_range_to_weightings)
 
 	hadestown_weighted_data = uniform_weightings(hadestown_data)
 	update_dictionary(divide_into_regions(hadestown_weighted_data, NUM_GROUPINGS), 'Uniform', earning_range_to_weightings)
