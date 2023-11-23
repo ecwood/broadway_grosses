@@ -5,6 +5,8 @@ BOOTSTRAPPING_ROUNDS = 1000000
 
 MAX_EARNINGS = 4500000.00
 
+WEEKLY_OPERATING_COST = 650000.00
+
 def run_bootstrapping(hadestown_grosses, multiplier_distribution):
 	weekly_distribution = list()
 	for x in range(BOOTSTRAPPING_ROUNDS):
@@ -98,6 +100,17 @@ def import_data():
 
 	return hadestown_grosses, multiplier_distributions
 
+def get_probability_of_exceeding_operating_cost(gross_distribution):
+	exceeding_operating_cost_trials = 0
+	total_trials = 1
+	for gross_trial in gross_distribution:
+		total_trials += 1
+		if gross_trial > WEEKLY_OPERATING_COST:
+			exceeding_operating_cost_trials += 1
+
+	return exceeding_operating_cost_trials / total_trials
+
+
 if __name__ == '__main__':
 	hadestown_grosses, multiplier_distributions = import_data()
 
@@ -105,8 +118,7 @@ if __name__ == '__main__':
 
 	for week in multiplier_distributions:
 		weekly_distributions[week] = run_bootstrapping(hadestown_grosses, multiplier_distributions[week])
-		print("Week " + week + ":")
-		earning_range_dictionary_to_tsv(divide_into_regions(weekly_distributions[week], 30))
-		print("===================================================")
+		probability_of_exceeding_operating_cost = get_probability_of_exceeding_operating_cost(weekly_distributions[week])
+		print("Week " + week + " Probability of Exceeding Operating Cost: " + str(probability_of_exceeding_operating_cost))
 
-	print_weekly_distribution_stats(weekly_distributions)
+	# print_weekly_distribution_stats(weekly_distributions)
