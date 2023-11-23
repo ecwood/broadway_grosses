@@ -252,7 +252,8 @@ def extract_long_running_show_data():
 				year = grosses_week.split('-')[0].strip()
 				week_num = show_grosses[grosses_week][WEEK_NUM_KEY]
 				gross = show_grosses[grosses_week][GROSS_KEY]
-				print(grosses_week + "\t" + show_name + "\t" + week_num + "\t" + year + "\t" + gross.strip('$').replace(',', ''))
+				num_shows = int(show_grosses[grosses_week][PREVIEWS_KEY]) + int(show_grosses[grosses_week][PERFORMANCES_KEY]
+				print(grosses_week + "\t" + show_name + "\t" + week_num + "\t" + year + "\t" + gross.strip('$').replace(',', '') + "\t" + str(num_shows))
 
 if __name__ == '__main__':
 	args = get_args()
