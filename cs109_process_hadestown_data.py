@@ -126,7 +126,7 @@ def earning_range_dictionary_to_tsv(earning_range_to_weightings):
 def save_weightings_list_json(hadestown_weighted_data):
 	weightings_list = []
 	for weighting in hadestown_weighted_data:
-		weightings_list += [weighting[GROSS_KEY]] * weighting[WEIGHTING_KEY]
+		weightings_list += [float(weighting[GROSS_KEY])] * weighting[WEIGHTING_KEY]
 
 	with open('hadestown_weightings.json', 'w') as hadestown_weightings_file:
 		hadestown_weightings_file.write(json.dumps(weightings_list, indent=4, sort_keys=True))
