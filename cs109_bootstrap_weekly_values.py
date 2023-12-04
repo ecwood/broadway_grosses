@@ -1,7 +1,10 @@
 import json
 import random
+from itertools import combinations
+import math
 
-BOOTSTRAPPING_ROUNDS = 1000000
+# Lowered for testing purposes
+BOOTSTRAPPING_ROUNDS = 100000
 
 MAX_EARNINGS = 4500000.00
 
@@ -110,6 +113,54 @@ def get_probability_of_exceeding_operating_cost(gross_distribution):
 
 	return exceeding_operating_cost_trials / total_trials
 
+def get_list_product(vals):
+	list_prod = 1
+	for val in vals:
+		list_prod *= val
+	return list_prod
+
+def get_lasting_probability(probabilities_of_exceeding_operating_cost, failing_weeks_before_close):
+	probabilities_of_exceeding_operating_cost_keys = sorted(probabilities_of_exceeding_operating_cost.keys())
+	lasting_probs = dict()
+	for full_index in range(len(probabilities_of_exceeding_operating_cost_keys)):
+		full_index_week = probabilities_of_exceeding_operating_cost_keys[full_index]
+		weeks_considered = list()
+		for week_index in range(0, full_index):
+			weeks_considered.append(probabilities_of_exceeding_operating_cost[probabilities_of_exceeding_operating_cost_keys[week_index]])
+
+		end_prob = probabilities_of_exceeding_operating_cost[full_index_week]
+		total_product = get_list_product(weeks_considered) * end_prob
+		prob = 0
+		combos = list()
+
+		if failing_weeks_before_close > (full_index + 1):
+			lasting_probs[full_index_week] = 0
+			continue
+
+		if failing_weeks_before_close > 1:
+			for base_combo in list(combinations(weeks_considered, failing_weeks_before_close - 1)):
+				combos.append(list(base_combo) + [end_prob])
+			print(combos)
+		else:
+			combos.append([end_prob])
+
+		for combo in combos:
+			curr_prob = 1
+			for item in combo:
+				curr_prob *= (1 - item) / item
+			prob += (curr_prob * total_product)
+		lasting_probs[full_index_week] = prob
+
+	lasting_probs_keys = sorted(lasting_probs.keys())
+	sum_prior_probs = 0
+	for week_index in range(len(lasting_probs_keys)):
+		week = lasting_probs_keys[week_index]
+		prob = lasting_probs[week]
+		print("Probability of lasting exactly " + str(week) + " week(s): " + str(prob))
+		sum_prior_probs += prob
+		print("Probabily of lasting more than "+ str(week) + " weeks(s): " + str(1-sum_prior_probs))
+
+
 
 if __name__ == '__main__':
 	hadestown_grosses, multiplier_distributions = import_data()
@@ -123,15 +174,8 @@ if __name__ == '__main__':
 		probability_of_exceeding_operating_cost = get_probability_of_exceeding_operating_cost(weekly_distributions[week])
 		probabilities_of_exceeding_operating_cost[int(week)] = probability_of_exceeding_operating_cost
 
-	probabilities_of_exceeding_operating_cost_keys = sorted(probabilities_of_exceeding_operating_cost.keys())
-	sum_prior_probs = 0
-	for full_index in range(len(probabilities_of_exceeding_operating_cost_keys)):
-		prob = 1
-		for week_index in range(0, full_index):
-			prob *= probabilities_of_exceeding_operating_cost[probabilities_of_exceeding_operating_cost_keys[week_index]]
-		prob *= 1 - probabilities_of_exceeding_operating_cost[probabilities_of_exceeding_operating_cost_keys[full_index]]
-		print("Probability of lasting exactly " + str(probabilities_of_exceeding_operating_cost_keys[full_index]) + " week(s): " + str(prob))
-		sum_prior_probs += prob
-		print("Probabily of lasting more than "+ str(probabilities_of_exceeding_operating_cost_keys[full_index]) + " weeks(s): " + str(1-sum_prior_probs))
+	for week in probabilities_of_exceeding_operating_cost:
+		probabilities_of_exceeding_operating_cost[week] = 0.9
+	get_lasting_probability(probabilities_of_exceeding_operating_cost, 2)
 
 	# print_weekly_distribution_stats(weekly_distributions)
