@@ -116,9 +116,22 @@ if __name__ == '__main__':
 
 	weekly_distributions = dict()
 
+	probabilities_of_exceeding_operating_cost = dict()
+
 	for week in multiplier_distributions:
 		weekly_distributions[week] = run_bootstrapping(hadestown_grosses, multiplier_distributions[week])
 		probability_of_exceeding_operating_cost = get_probability_of_exceeding_operating_cost(weekly_distributions[week])
-		print("Week " + week + " Probability of Exceeding Operating Cost: " + str(probability_of_exceeding_operating_cost))
+		probabilities_of_exceeding_operating_cost[int(week)] = probability_of_exceeding_operating_cost
+
+	probabilities_of_exceeding_operating_cost_keys = sorted(probabilities_of_exceeding_operating_cost.keys())
+	sum_prior_probs = 0
+	for full_index in range(len(probabilities_of_exceeding_operating_cost_keys)):
+		prob = 1
+		for week_index in range(0, full_index):
+			prob *= probabilities_of_exceeding_operating_cost[probabilities_of_exceeding_operating_cost_keys[week_index]]
+		prob *= 1 - probabilities_of_exceeding_operating_cost[probabilities_of_exceeding_operating_cost_keys[full_index]]
+		print("Probability of lasting exactly " + str(probabilities_of_exceeding_operating_cost_keys[full_index]) + " week(s): " + str(prob))
+		sum_prior_probs += prob
+		print("Probabily of lasting more than "+ str(probabilities_of_exceeding_operating_cost_keys[full_index]) + " weeks(s): " + str(1-sum_prior_probs))
 
 	# print_weekly_distribution_stats(weekly_distributions)

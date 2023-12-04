@@ -66,22 +66,55 @@ def divide_into_regions(weighted_data, num_regions):
 
 	return earning_range_to_weighting
 
+def calculate_expectation(vals):
+	list_sum = 0
+
+	for val in vals:
+		list_sum += val
+
+	return list_sum / len(vals)
 
 def import_data():
+	week_definitions = dict()
+	with open('cs109_week_definitions.tsv') as week_defs_data:
+		index = 0
+		for data_line in week_defs_data:
+			index += 1
+			if index == 1:
+				continue
+			data_line_split = data_line.strip().split('\t')
+			week_num = int(data_line_split[0])
+
+			for week_date in data_line_split[1:]:
+				week_definitions["-" + week_date] = week_num
+
+
+	multiplier_distributions = dict()
+	with open('weekly_weightings.json') as weekly_weightings_file:
+		multiplier_distributions_loaded = json.load(weekly_weightings_file)
+
+		for week in multiplier_distributions_loaded:
+			multiplier_distributions[week] = calculate_expectation(multiplier_distributions_loaded[week])
+
 	data = list()
 
 	with open('cs109_hadestown_data.tsv') as hadestown_in_data:
 		for data_line in hadestown_in_data:
 			data_line_split = data_line.split('\t')
 			week_date = data_line_split[0]
-			week = data_line_split[2]
+			formal_week = data_line_split[2]
 			year = data_line_split[3]
 			gross = data_line_split[4]
 
+			week = week_definitions[week_date.replace(year, '')]
+
+			week_modified_gross = str(float(gross) / multiplier_distributions[str(week)])
+
 			data.append({WEEK_DATE_KEY: week_date,
-						 WEEK_KEY: week,
+						 WEEK_KEY: formal_week,
 						 YEAR_KEY: year,
-						 GROSS_KEY: gross})
+						 GROSS_KEY: week_modified_gross})
+
 
 	return data
 
@@ -123,7 +156,6 @@ def save_weightings_list_json(hadestown_weighted_data):
 
 	with open('hadestown_weightings.json', 'w') as hadestown_weightings_file:
 		hadestown_weightings_file.write(json.dumps(weightings_list, indent=4, sort_keys=True))
-
 
 if __name__ == '__main__':
 	hadestown_data = import_data()
