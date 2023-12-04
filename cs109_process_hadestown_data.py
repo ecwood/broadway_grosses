@@ -1,4 +1,5 @@
 import json
+import math
 
 WEEK_DATE_KEY = 'week_date'
 WEEK_KEY = 'week'
@@ -20,10 +21,26 @@ def uniform_weightings(data):
 	return data
 
 
-def nearest_grouped_week_weightings(data, num_weeks_to_group):
+def linear_week_weightings(data, num_weeks_to_group):
 	week_index = 0
 	for data_point in data:
 		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * (int(week_index / num_weeks_to_group) + 1)
+		week_index += 1
+
+	return data
+
+def quadratic_week_weightings(data, num_weeks_to_group):
+	week_index = 0
+	for data_point in data:
+		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * pow((int(week_index / num_weeks_to_group) + 1), 2)
+		week_index += 1
+
+	return data
+
+def exponential_week_weightings(data, num_weeks_to_group):
+	week_index = 0
+	for data_point in data:
+		data_point[WEIGHTING_KEY] = (data_point[WEEK_DATE_KEY] not in SKIP_WEEKS) * math.ceil(pow(2, (int(week_index / num_weeks_to_group) + 1) / 2)) # divide by 2 to prevent overflow
 		week_index += 1
 
 	return data
@@ -149,12 +166,12 @@ def earning_range_dictionary_to_tsv(earning_range_to_weightings):
 
 		print(line_str)
 
-def save_weightings_list_json(hadestown_weighted_data):
+def save_weightings_list_json(hadestown_weighted_data, weightings_type):
 	weightings_list = []
 	for weighting in hadestown_weighted_data:
 		weightings_list += [float(weighting[GROSS_KEY])] * weighting[WEIGHTING_KEY]
 
-	with open('hadestown_weightings.json', 'w') as hadestown_weightings_file:
+	with open('hadestown_weightings-' + weightings_type + '.json', 'w') as hadestown_weightings_file:
 		hadestown_weightings_file.write(json.dumps(weightings_list, indent=4, sort_keys=True))
 
 if __name__ == '__main__':
@@ -162,9 +179,14 @@ if __name__ == '__main__':
 
 	earning_range_to_weightings = dict()
 
-	# hadestown_weighted_data = uniform_weightings(hadestown_data)
+	hadestown_weighted_data_uniform = uniform_weightings(hadestown_data)
+	save_weightings_list_json(hadestown_weighted_data_uniform, "uniform")
 
-	# Group by the month
-	hadestown_weighted_data = nearest_grouped_week_weightings(hadestown_data, 4)
+	hadestown_weighted_data_linear = linear_week_weightings(hadestown_data, 4)
+	save_weightings_list_json(hadestown_weighted_data_linear, "linear")
 
-	save_weightings_list_json(hadestown_weighted_data)
+	hadestown_weighted_data_quadratic = quadratic_week_weightings(hadestown_data, 4)
+	save_weightings_list_json(hadestown_weighted_data_quadratic, "quadratic")
+
+	hadestown_weighted_data_exponential = exponential_week_weightings(hadestown_data, 4)
+	save_weightings_list_json(hadestown_weighted_data_exponential, "exponential")
