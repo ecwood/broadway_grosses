@@ -8,7 +8,9 @@ BOOTSTRAPPING_ROUNDS = 100000
 
 MAX_EARNINGS = 4500000.00
 
-WEEKLY_OPERATING_COST = 650000.00
+WEEKLY_OPERATING_COST_ESTIMATES = [650000, 850000]
+
+FAILURE_WEEK_ESTIMATES = [1, 2, 4] # I tried 8 but it spent hours not finishing
 
 def run_bootstrapping(hadestown_grosses, multiplier_distribution):
 	weekly_distribution = list()
@@ -92,9 +94,9 @@ def earning_range_dictionary_to_tsv(earning_range_to_weightings):
 
 		print(line_str)
 
-def import_data():
+def import_data(weighting_type):
 	hadestown_grosses = list()
-	with open('hadestown_weightings.json') as hadestown_weightings_file:
+	with open('hadestown_weightings-' + weighting_type + '.json') as hadestown_weightings_file:
 		hadestown_grosses = json.load(hadestown_weightings_file)
 
 	multiplier_distributions = list()
@@ -103,12 +105,12 @@ def import_data():
 
 	return hadestown_grosses, multiplier_distributions
 
-def get_probability_of_exceeding_operating_cost(gross_distribution):
+def get_probability_of_exceeding_operating_cost(gross_distribution, weekly_operating_cost):
 	exceeding_operating_cost_trials = 0
 	total_trials = 1
 	for gross_trial in gross_distribution:
 		total_trials += 1
-		if gross_trial > WEEKLY_OPERATING_COST:
+		if gross_trial > weekly_operating_cost:
 			exceeding_operating_cost_trials += 1
 
 	return exceeding_operating_cost_trials / total_trials
@@ -140,7 +142,6 @@ def get_lasting_probability(probabilities_of_exceeding_operating_cost, failing_w
 		if failing_weeks_before_close > 1:
 			for base_combo in list(combinations(weeks_considered, failing_weeks_before_close - 1)):
 				combos.append(list(base_combo) + [end_prob])
-			print(combos)
 		else:
 			combos.append([end_prob])
 
@@ -151,31 +152,89 @@ def get_lasting_probability(probabilities_of_exceeding_operating_cost, failing_w
 			prob += (curr_prob * total_product)
 		lasting_probs[full_index_week] = prob
 
-	lasting_probs_keys = sorted(lasting_probs.keys())
-	sum_prior_probs = 0
+	return lasting_probs
+
+def print_lasting_probs(lasting_probs):
+	data = list()
+	header = ["Week"]
+	ex_weighting_type = str()
+	ex_weekly_operating_cost = int()
+	ex_failing_weeks_before_close = int()
+	sum_prior_probs = dict()
+	expectations = dict()
+	for weighting_type in lasting_probs:
+		for weekly_operating_cost in lasting_probs[weighting_type]:
+			for failing_weeks_before_close in lasting_probs[weighting_type][weekly_operating_cost]:
+				header.append(weighting_type + ", " + str(weekly_operating_cost) + ", " + str(failing_weeks_before_close) + "Exactly")
+				header.append(weighting_type + ", " + str(weekly_operating_cost) + ", " + str(failing_weeks_before_close) + "More")
+				ex_weighting_type = weighting_type
+				ex_weekly_operating_cost = weekly_operating_cost
+				ex_failing_weeks_before_close = failing_weeks_before_close
+				if weighting_type not in sum_prior_probs:
+					sum_prior_probs[weighting_type] = dict()
+				if weekly_operating_cost not in sum_prior_probs[weighting_type]:
+					sum_prior_probs[weighting_type][weekly_operating_cost] = dict()
+				sum_prior_probs[weighting_type][weekly_operating_cost][failing_weeks_before_close] = 0
+
+				if weighting_type not in expectations:
+					expectations[weighting_type] = dict()
+				if weekly_operating_cost not in expectations[weighting_type]:
+					expectations[weighting_type][weekly_operating_cost] = dict()
+				expectations[weighting_type][weekly_operating_cost][failing_weeks_before_close] = 0
+	data.append(header)
+
+	lasting_probs_keys = sorted(lasting_probs[ex_weighting_type][ex_weekly_operating_cost][ex_failing_weeks_before_close].keys())
+	
 	for week_index in range(len(lasting_probs_keys)):
 		week = lasting_probs_keys[week_index]
-		prob = lasting_probs[week]
-		print("Probability of lasting exactly " + str(week) + " week(s): " + str(prob))
-		sum_prior_probs += prob
-		print("Probabily of lasting more than "+ str(week) + " weeks(s): " + str(1-sum_prior_probs))
+		week_list = [str(week)]
+
+		for weighting_type in lasting_probs:
+			for weekly_operating_cost in lasting_probs[weighting_type]:
+				for failing_weeks_before_close in lasting_probs[weighting_type][weekly_operating_cost]:
+					prob = lasting_probs[weighting_type][weekly_operating_cost][failing_weeks_before_close][week]
+					week_list.append(str(prob))
+					expectations[weighting_type][weekly_operating_cost][failing_weeks_before_close] += prob * week
+					sum_prior_probs[weighting_type][weekly_operating_cost][failing_weeks_before_close] += prob
+					week_list.append(str(1- sum_prior_probs[weighting_type][weekly_operating_cost][failing_weeks_before_close]))
+		data.append(week_list)
+
+	for datapoint in data:
+		print('\t'.join(datapoint))
+
+	print("=============")
+	print("Expectations:")
+
+	for weighting_type in expectations:
+		print(weighting_type + ": " + str(expectations[weighting_type]))
 
 
 
 if __name__ == '__main__':
-	hadestown_grosses, multiplier_distributions = import_data()
+	all_lasting_probs = dict()
+	for weighting_type in ["uniform", "linear", "quadratic", "exponential"]:
+		all_lasting_probs[weighting_type] = dict()
+		hadestown_grosses, multiplier_distributions = import_data(weighting_type)
 
-	weekly_distributions = dict()
+		weekly_distributions = dict()
 
-	probabilities_of_exceeding_operating_cost = dict()
+		probabilities_of_exceeding_operating_cost = dict()
 
-	for week in multiplier_distributions:
-		weekly_distributions[week] = run_bootstrapping(hadestown_grosses, multiplier_distributions[week])
-		probability_of_exceeding_operating_cost = get_probability_of_exceeding_operating_cost(weekly_distributions[week])
-		probabilities_of_exceeding_operating_cost[int(week)] = probability_of_exceeding_operating_cost
+		for week in multiplier_distributions:
+			weekly_distributions[week] = run_bootstrapping(hadestown_grosses, multiplier_distributions[week])
+			
+			for weekly_operating_cost in WEEKLY_OPERATING_COST_ESTIMATES:
+				if weekly_operating_cost not in probabilities_of_exceeding_operating_cost:
+					probabilities_of_exceeding_operating_cost[weekly_operating_cost] = dict()
+				probabilities_of_exceeding_operating_cost[weekly_operating_cost][int(week)] = get_probability_of_exceeding_operating_cost(weekly_distributions[week], weekly_operating_cost)
 
-	for week in probabilities_of_exceeding_operating_cost:
-		probabilities_of_exceeding_operating_cost[week] = 0.9
-	get_lasting_probability(probabilities_of_exceeding_operating_cost, 2)
+		for weekly_operating_cost in probabilities_of_exceeding_operating_cost:
+			all_lasting_probs[weighting_type][weekly_operating_cost] = dict()
+			for failing_weeks_before_close in FAILURE_WEEK_ESTIMATES:
+				lasting_probs = get_lasting_probability(probabilities_of_exceeding_operating_cost[weekly_operating_cost], failing_weeks_before_close)
+				all_lasting_probs[weighting_type][weekly_operating_cost][failing_weeks_before_close] = lasting_probs
+
+	print_lasting_probs(all_lasting_probs)
+
 
 	# print_weekly_distribution_stats(weekly_distributions)
